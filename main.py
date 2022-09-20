@@ -11,7 +11,7 @@ import time
 # CONTANTS
 RES_PATH = 'res'
 IMG_FOLDER_PATH = os.path.join(RES_PATH, 'img')
-IMG_NAME = 'new2.png'
+IMG_NAME = 'new3.png'
 IMG_PATH = os.path.join(IMG_FOLDER_PATH, IMG_NAME)
 
 
@@ -21,8 +21,16 @@ def set_structure():
 
 
 # FUNCTIONS
-def ray_color(v) -> RGB:
-    t = 0.5 * (v + 1.)
+def hit_sphere(center, radius, r):
+    oc = r.origin - center
+    a = r.direction.length_squared()
+    b = 2. * oc.dot(r.direction)
+    c = oc.length_squared() - radius**2
+    discriminant = b**2 - 4*a*c
+    return discriminant > 0
+
+def ray_color(r) -> RGB:
+    t = 0.5 * (r.direction.normalize().y + 1.)
     return (1.-t) * RGB(1., 1., 1.) + t * RGB(0.5, 0.7, 1.0)
 
 def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lower_left_corner):
@@ -44,7 +52,11 @@ def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lowe
     r = Ray(origin, lower_left_corner + u*horizontal + v*vertical - origin)
     # print(r)
 
-    pixel_color = [(v*255.999).components() for v in ray_color(r.direction.normalize().y)]
+    # if hit_sphere(Point(0,0,-1), 0.5, r):
+    #     return RGB(1,0,0)
+    p = Point(0,0,-1)
+    pixel_color = np.where(hit_sphere(p, 0.5, r), RGB(1,0,0), ray_color(r))
+    pixel_color = [(v*255.999).components() for v in pixel_color]
 
     return np.reshape(pixel_color, (height, width, 3)).astype(np.uint8)
     #return np.stack((x,y,z), axis=1).astype(np.uint8).reshape((height, width, 3))
