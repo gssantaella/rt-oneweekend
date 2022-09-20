@@ -8,13 +8,14 @@ import time
 
 # CONTANTS
 RES_PATH = 'res'
-IMG_PATH = os.path.join(RES_PATH, 'img')
+IMG_FOLDER_PATH = os.path.join(RES_PATH, 'img')
 IMG_NAME = 'new1.png'
+IMG_PATH = os.path.join(IMG_FOLDER_PATH, IMG_NAME)
 
 
 # HELPER
 def set_structure():
-    os.makedirs(IMG_PATH, exist_ok=True)
+    os.makedirs(IMG_FOLDER_PATH, exist_ok=True)
 
 
 # MAIN
@@ -33,9 +34,12 @@ def main():
     end = time.time()
     print(f'time numpy: {end-start}\n')
     
-    create_image(array, os.path.join(IMG_PATH, IMG_NAME))
+    create_image(array, IMG_PATH)
+
+    print('\nDone!\n')
 
     return
+
 
 def create_image_array(width, height):
 
@@ -51,11 +55,10 @@ def create_image_array(width, height):
     return np.stack((x,y,z), axis=1).astype(np.uint8).reshape((height, width, 3))
 
 
-
-def create_image(array, img_path):
+def create_image(array, IMG_FOLDER_PATH):
     new_image = Image.fromarray(array)
-    new_image.save(img_path)
-    print(f'IMAGE PATH: {img_path}\n')
+    new_image.save(IMG_FOLDER_PATH)
+    print(f'IMAGE PATH: {IMG_FOLDER_PATH}\n')
 
 
 if __name__ == '__main__':
