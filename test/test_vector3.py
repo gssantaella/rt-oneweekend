@@ -1,5 +1,5 @@
 import unittest
-
+import numpy as np
 from src.vector.vector3 import *
 
 
@@ -24,6 +24,11 @@ class TestVec3(unittest.TestCase):
         v2 = Vec3(2,4,6)
         v3 = Vec3(3,6,9)
         self.assertEqual(v1+v2, v3)
+
+    def test_addition_scalar(self):
+        v1 = Vec3(1,2,3)
+        n = 2
+        self.assertEqual(v1+n, Vec3(3,4,5))
 
     def test_iaddition(self):
         v1 = Vec3(1,2,3)
@@ -77,26 +82,26 @@ class TestVec3(unittest.TestCase):
 
     def test_length_squared(self):
         v1 = Vec3(1,2,3)
-        self.assertEqual(v1.length_squared, 14)
+        self.assertEqual(v1.length_squared(), 14)
 
     def test_length(self):
         v1 = Vec3(1,2,3)
         t = 14 ** 0.5
-        self.assertEqual(v1.length, t)
+        self.assertEqual(v1.length(), t)
 
     def test_dot(self):
         v1 = Vec3(3,3,3)
         v2 = Vec3(2,2,2)
-        self.assertEqual(Vec3.dot(v1,v2), 18)
+        self.assertEqual(v1.dot(v2), 18)
 
     def test_cross(self):
         v1 = Vec3(1,2,3)
         v2 = Vec3(2,4,6)
-        self.assertEqual(Vec3.cross(v1,v2), Vec3(0,0,0))
+        self.assertEqual(v1.cross(v2), Vec3(0,0,0))
 
-    def test_unit_vector(self):
+    def test_normalize(self):
         v1 = Vec3(1,2,3)
-        self.assertEqual(Vec3.unit_vector(v1), Vec3(0.2672612419124244, 0.5345224838248488, 0.8017837257372732))
+        self.assertEqual(v1.normalize(), Vec3(0.2672612419124244, 0.5345224838248488, 0.8017837257372732))
 
 if __name__ == '__main__':
     unittest.main()

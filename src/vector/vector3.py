@@ -98,27 +98,26 @@ class Vec3(object):
             self.z /= v
             return self
 
-    @property
-    def length_squared(self) -> float:
-        return self.x*self.x + self.y*self.y + self.z*self.z
+    def sqrt(v):
+        return Vec3(np.sqrt(v.x), np.sqrt(v.y), np.sqrt(v.z)) 
 
-    @property
+    def dot(self, v):
+        return self.x * v.x + self.y * v.y + self.z * v.z
+
+    def cross(self, v: Vec3) -> Vec3:
+        return Vec3(self.y * v.z - self.z * v.y,
+                    self.z * v.x - self.x * v.z,
+                    self.x * v.y - self.y * v.x)
+
     def length(self) -> float:
-        return sqrt(self.length_squared)
+        return np.sqrt(self.length_squared())
 
-    @classmethod
-    def dot(cls, u: Vec3, v: Vec3) -> float:
-        return u.x * v.x + u.y * v.y + u.z * v.z
+    def length_squared(self) -> float:
+        return self.dot(self)
 
-    @classmethod
-    def cross(cls, u: Vec3, v: Vec3) -> Vec3:
-        return Vec3(u.y * v.z - u.z * v.y,
-                    u.z * v.x - u.x * v.z,
-                    u.x * v.y - u.y * v.x)
-
-    @classmethod
-    def unit_vector(cls, u: Vec3) -> Vec3:
-        return u / u.length
+    def normalize(self) -> Vec3:
+        m = self.length()
+        return self * (1.0 / np.where(m == 0, 1, m))
 
 
 RGB = Vec3
