@@ -1,4 +1,6 @@
 from src.vector.vector3 import *
+import numbers
+import numpy as np
 
 class Ray(object):
     """docstring for Ray"""
@@ -11,7 +13,7 @@ class Ray(object):
         return f'ray(ori:{self.origin}, dir:{self.direction})'
 
     def at(self, t: float) -> Vec3:
-        return self.origin + t*self.direction
+            return self.origin + self.direction*t
 
 if __name__ == '__main__':
     r = Ray()

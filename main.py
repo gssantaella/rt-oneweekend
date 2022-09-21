@@ -11,7 +11,7 @@ import time
 # CONTANTS
 RES_PATH = 'res'
 IMG_FOLDER_PATH = os.path.join(RES_PATH, 'img')
-IMG_NAME = 'new3.png'
+IMG_NAME = 'new4.png'
 IMG_PATH = os.path.join(IMG_FOLDER_PATH, IMG_NAME)
 
 
@@ -21,7 +21,7 @@ def set_structure():
 
 
 # FUNCTIONS
-def hit_sphere(center, radius, r):
+def xhit_sphere(center, radius, r):
     oc = r.origin - center
     a = r.direction.length_squared()
     b = 2. * oc.dot(r.direction)
@@ -29,9 +29,38 @@ def hit_sphere(center, radius, r):
     discriminant = b**2 - 4*a*c
     return discriminant > 0
 
-def ray_color(r) -> RGB:
+def hit_sphere(center, radius, r):
+    oc = r.origin - center
+    a = r.direction.length_squared()
+    b = 2. * oc.dot(r.direction)
+    c = oc.length_squared() - radius**2
+    discriminant = b**2 - 4*a*c
+    return discriminant, a, b
+
+def xray_color(r) -> RGB:
     t = 0.5 * (r.direction.normalize().y + 1.)
     return (1.-t) * RGB(1., 1., 1.) + t * RGB(0.5, 0.7, 1.0)
+
+def ray_color(r,t) -> RGB:
+    # t = hit_sphere(Point(0,0,-1), 0.5, r)
+    if t > 0.0:
+        N = (r.at(t) - Vec3(0,0,-1)).normalize()
+        return 0.5 * RGB(N.x+1, N.y+1, N.z+1)
+    t = 0.5 * (r.direction.normalize().y + 1.)
+    return (1.-t) * RGB(1., 1., 1.) + t * RGB(0.5, 0.7, 1.0)
+
+def shade(r,t):
+    # print('1')
+    N = (r.at(t) - Vec3(0,0,-1)).normalize()
+    s = 0.5 * RGB(N.x+1, N.y+1, N.z+1)
+    # print('Ss',s)
+    return s
+def lerp(r,t):
+    # print('3')
+    t = 0.5 * (r.direction.normalize().y + 1.)
+    s = RGB(1., 1., 1.)*(1.-t) + RGB(0.5, 0.7, 1.0)*t
+    # print('Sl',s)
+    return s
 
 def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lower_left_corner):
 
@@ -41,22 +70,31 @@ def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lowe
 
     u = Vec3(xx.flatten(), 0, 0)
     v = Vec3(0, yy.flatten(), 0)
-    # print('U', u)
-    # print('V', v)
-
-    # print('o', origin)
-    # print('llc', lower_left_corner)
-    # print('hor', horizontal)
-    # print('ver', vertical)
-
     r = Ray(origin, lower_left_corner + u*horizontal + v*vertical - origin)
-    # print(r)
-
-    # if hit_sphere(Point(0,0,-1), 0.5, r):
-    #     return RGB(1,0,0)
     p = Point(0,0,-1)
-    pixel_color = np.where(hit_sphere(p, 0.5, r), RGB(1,0,0), ray_color(r))
-    pixel_color = [(v*255.999).components() for v in pixel_color]
+
+    hits, a, b = hit_sphere(p, 0.5, r)
+
+    mask = (hits < 0)
+    hits[~mask] = (-b[~mask] - np.sqrt(hits[~mask]) ) / (2. * a[~mask])
+    hits[mask] = -1.
+
+    mask = (hits > 0.0)
+    r1 = Ray(r.origin, Vec3(r.direction.x[mask], r.direction.y[mask], -1.0))
+    r2 = Ray(r.origin, Vec3(r.direction.x[~mask], r.direction.y[~mask], -1.0))
+
+    a_hit = np.stack(shade(r1, hits[mask]).components(), axis=1)*255.999
+    a_not_hit = np.stack(lerp(r2, hits[~mask]).components(), axis=1)*255.999
+
+    mask = np.reshape(mask, (height, width))
+    pc = np.empty((height, width, 3), np.uint8)
+
+    pc[mask] = a_hit
+    pc[~mask] = a_not_hit
+
+    pixel_color = [(v) for v in pc]
+    # print(pixel_color)
+    # print(type(pixel_color))
 
     return np.reshape(pixel_color, (height, width, 3)).astype(np.uint8)
     #return np.stack((x,y,z), axis=1).astype(np.uint8).reshape((height, width, 3))
@@ -103,5 +141,6 @@ def main():
 
 
 if __name__ == '__main__':
+    
     set_structure()
     main()
