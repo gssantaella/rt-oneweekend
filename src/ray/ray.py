@@ -17,4 +17,4 @@ class Ray(object):
 
 if __name__ == '__main__':
     r = Ray()
-    print(r.originin())
+    print(r)

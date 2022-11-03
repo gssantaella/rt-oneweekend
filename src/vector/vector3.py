@@ -98,10 +98,10 @@ class Vec3(object):
             self.z /= v
             return self
 
-    def sqrt(v):
+    def sqrt(v) -> Vec3:
         return Vec3(np.sqrt(v.x), np.sqrt(v.y), np.sqrt(v.z)) 
 
-    def dot(self, v):
+    def dot(self, v) -> float:
         return self.x * v.x + self.y * v.y + self.z * v.z
 
     def cross(self, v: Vec3) -> Vec3:
