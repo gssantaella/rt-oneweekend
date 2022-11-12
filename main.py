@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 from src.vector.vector3 import *
 from src.ray.ray import *
+from src.hittable.sphere import *
 
 import os
 import time
@@ -11,7 +12,7 @@ import time
 # CONTANTS
 RES_PATH = 'res'
 IMG_FOLDER_PATH = os.path.join(RES_PATH, 'img')
-IMG_NAME = 'new2.png'
+IMG_NAME = 'new5.png'
 IMG_PATH = os.path.join(IMG_FOLDER_PATH, IMG_NAME)
 
 
@@ -21,32 +22,77 @@ def set_structure():
 
 
 # FUNCTIONS
-def ray_color(v) -> RGB:
-    t = 0.5 * (v + 1.)
-    return (1.-t) * RGB(1., 1., 1.) + t * RGB(0.5, 0.7, 1.0)
+def hit_sphere(center, radius, r):
+    oc = r.origin - center
+    a = r.direction.length_squared()
+    half_b = oc.dot(r.direction)
+    c = oc.length_squared() - radius**2
+    discriminant = half_b**2 - a*c
+    return discriminant, a, half_b
+
+
+def shade(r,t):
+    # print('1')
+    N = (r.at(t) - Vec3(0,0,-1)).normalize()
+    s = 0.5 * RGB(N.x+1, N.y+1, N.z+1)
+    # print('Ss',s)
+    return s
+
+
+def lerp(r,t):
+    # print('3')
+    t = 0.5 * (r.direction.normalize().y + 1.)
+    s = RGB(1., 1., 1.)*(1.-t) + RGB(0.5, 0.7, 1.0)*t
+    # print('Sl',s)
+    return s
 
 def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lower_left_corner):
 
     LENGTH = width * height
 
+    # cria todos os X e Y de todos os pixels da tela
     xx, yy = np.meshgrid(np.linspace(0, 1, width), np.linspace(1, 0, height))
 
+    # cria os vetores com o array diminuido para 1-D
     u = Vec3(xx.flatten(), 0, 0)
     v = Vec3(0, yy.flatten(), 0)
-    # print('U', u)
-    # print('V', v)
-
-    # print('o', origin)
-    # print('llc', lower_left_corner)
-    # print('hor', horizontal)
-    # print('ver', vertical)
-
+    
+    # todos os raios emitidos
     r = Ray(origin, lower_left_corner + u*horizontal + v*vertical - origin)
-    # print(r)
+    
+    # centro da esfera
+    p = Point(0,0,-1)
+    p2 = Point(1,0,-1)
 
-    pixel_color = [(v*255.999).components() for v in ray_color(r.direction.normalize().y)]
+    # calcula todas as interseccoes com a esfera
+    sph = Sphere(p, 0.5)
+    hits1 = sph.hit(r, 0, np.inf)
+    sph2 = Sphere(p2, 0.5)
+    hits2 = sph2.hit(r, 0, np.inf)
+    hits = np.maximum(hits1, hits2)
 
-    return np.reshape(pixel_color, (height, width, 3)).astype(np.uint8)
+    # mascara para acertos
+    mask = (hits > 0.0)
+    print(len(hits[mask]))
+    # cria raios com acertos e com fundo
+    r_hit = Ray(r.origin, Vec3(r.direction.x[mask], r.direction.y[mask], -1.0))
+    r_no_hit = Ray(r.origin, Vec3(r.direction.x[~mask], r.direction.y[~mask], -1.0))
+
+    # calcula cor dos raios
+    a_hit = np.stack(shade(r_hit, hits[mask]).components(), axis=1)*255.999
+    a_no_hit = np.stack(lerp(r_no_hit, hits[~mask]).components(), axis=1)*255.999
+
+    # cria mascara para popular o vetor com cores
+    mask = np.reshape(mask, (height, width))
+    # cria array no formato das cores para poder preencher
+    pixel_color = np.empty((height, width, 3), np.uint8)
+
+    # popula array de acordo com a mascara
+    pixel_color[mask] = a_hit
+    pixel_color[~mask] = a_no_hit
+
+    # modifica formato do vetor para ser aceito pela funcao de criar imagem
+    return np.reshape(pixel_color, (height, width, 3))#.astype(np.uint8)
     #return np.stack((x,y,z), axis=1).astype(np.uint8).reshape((height, width, 3))
 
 
@@ -91,5 +137,6 @@ def main():
 
 
 if __name__ == '__main__':
+    
     set_structure()
     main()
