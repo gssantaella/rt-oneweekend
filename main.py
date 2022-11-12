@@ -62,26 +62,25 @@ def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lowe
     
     # centro da esfera
     p = Point(0,0,-1)
+    p2 = Point(1,0,-1)
 
     # calcula todas as interseccoes com a esfera
     sph = Sphere(p, 0.5)
-    hits, a, b = sph.hit(r, None, None)
+    hits1 = sph.hit(r, 0, np.inf)
+    sph2 = Sphere(p2, 0.5)
+    hits2 = sph2.hit(r, 0, np.inf)
+    hits = np.maximum(hits1, hits2)
 
-    # cria mascara para fazer calculo apenas com os acertos
-    mask = (hits < 0)
-    # seleciona menor raiz da interseccao, eh sempre a mais proxima da camera
-    hits[~mask] = (-b[~mask] - np.sqrt(hits[~mask])) / a[~mask]
-    # retorna -1 quando nao atinge a esfera
-    hits[mask] = -1.
-
+    # mascara para acertos
     mask = (hits > 0.0)
+    print(len(hits[mask]))
     # cria raios com acertos e com fundo
-    r1 = Ray(r.origin, Vec3(r.direction.x[mask], r.direction.y[mask], -1.0))
-    r2 = Ray(r.origin, Vec3(r.direction.x[~mask], r.direction.y[~mask], -1.0))
+    r_hit = Ray(r.origin, Vec3(r.direction.x[mask], r.direction.y[mask], -1.0))
+    r_no_hit = Ray(r.origin, Vec3(r.direction.x[~mask], r.direction.y[~mask], -1.0))
 
     # calcula cor dos raios
-    a_hit = np.stack(shade(r1, hits[mask]).components(), axis=1)*255.999
-    a_not_hit = np.stack(lerp(r2, hits[~mask]).components(), axis=1)*255.999
+    a_hit = np.stack(shade(r_hit, hits[mask]).components(), axis=1)*255.999
+    a_no_hit = np.stack(lerp(r_no_hit, hits[~mask]).components(), axis=1)*255.999
 
     # cria mascara para popular o vetor com cores
     mask = np.reshape(mask, (height, width))
@@ -90,7 +89,7 @@ def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lowe
 
     # popula array de acordo com a mascara
     pixel_color[mask] = a_hit
-    pixel_color[~mask] = a_not_hit
+    pixel_color[~mask] = a_no_hit
 
     # modifica formato do vetor para ser aceito pela funcao de criar imagem
     return np.reshape(pixel_color, (height, width, 3))#.astype(np.uint8)
