@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 from src.vector.vector3 import *
 from src.ray.ray import *
+from src.hittable.sphere import *
 
 import os
 import time
@@ -55,13 +56,16 @@ def create_image_array(width, height, vw, vh, origin, vertical, horizontal, lowe
     # cria os vetores com o array diminuido para 1-D
     u = Vec3(xx.flatten(), 0, 0)
     v = Vec3(0, yy.flatten(), 0)
+    
     # todos os raios emitidos
     r = Ray(origin, lower_left_corner + u*horizontal + v*vertical - origin)
+    
     # centro da esfera
     p = Point(0,0,-1)
 
     # calcula todas as interseccoes com a esfera
-    hits, a, b = hit_sphere(p, 0.5, r)
+    sph = Sphere(p, 0.5)
+    hits, a, b = sph.hit(r, None, None)
 
     # cria mascara para fazer calculo apenas com os acertos
     mask = (hits < 0)
